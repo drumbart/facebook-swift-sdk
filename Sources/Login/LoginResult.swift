@@ -38,21 +38,19 @@ extension LoginResult {
       self = .failed(error)
       return
     }
-    guard let sdkResult = sdkResult else {
-      //FIXME: (nlutsenko) Use a good error type here.
-      let error = NSError(domain: "", code: 42, userInfo: nil)
-      self = .failed(error)
+    guard !sdkResult.isCancelled, let token = sdkResult.token else {
+      self = .cancelled
       return
     }
-    if sdkResult.isCancelled {
-      self = .cancelled
-    } else {
-      let grantedPermissions = (sdkResult.grantedPermissions?.flatMap({ $0 as? String }).map({ Permission(name: $0) })).map(Set.init)
-      let declinedPermissions = (sdkResult.declinedPermissions?.flatMap({ $0 as? String }).map({ Permission(name: $0) })).map(Set.init)
-      self = .success(grantedPermissions: grantedPermissions ?? [],
-                      declinedPermissions: declinedPermissions ?? [],
-                      token: AccessToken(sdkAccessToken: sdkResult.token))
-
-    }
+  
+    let grantedPermissions = (sdkResult.grantedPermissions?.compactMap { $0 as? String }
+      .map { Permission(name: $0) })
+      .map(Set.init)
+    let declinedPermissions = (sdkResult.declinedPermissions?.compactMap { $0 as? String }
+      .map { Permission(name: $0) })
+      .map(Set.init)
+    self = .success(grantedPermissions: grantedPermissions ?? [],
+                    declinedPermissions: declinedPermissions ?? [],
+                    token: AccessToken(sdkAccessToken: token))
   }
 }
