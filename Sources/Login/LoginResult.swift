@@ -38,6 +38,14 @@ extension LoginResult {
       self = .failed(error)
       return
     }
+    
+    guard let sdkResult = sdkResult else {
+      //FIXME: (nlutsenko) Use a good error type here.
+      let error = NSError(domain: "", code: 42, userInfo: nil)
+      self = .failed(error)
+      return
+    }
+    
     guard !sdkResult.isCancelled, let token = sdkResult.token else {
       self = .cancelled
       return
